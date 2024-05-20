@@ -6,11 +6,9 @@ import uasyncio as asyncio
 
 BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
 BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
-
 SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
 SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
 SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
-
 
 SSID = 'JAISTALL'
 SSID_PASSWORD = ''
@@ -54,9 +52,6 @@ async def net_setup() -> MQTTClient:
 
     try:
         mqtt_client.subscribe("i483/sensors/s2410014/#")
-
-        # mqtt_client.subscribe(BMP180_TEMP_TOPIC)
-        # mqtt_client.subscribe(BMP180_PRESSURE_TOPIC)
     except Exception as e:
         print(f"Failed to subscribe to topics: {e}")
         raise
@@ -66,11 +61,10 @@ async def net_setup() -> MQTTClient:
 async def publish_sensor_data(client):
     try:
         while True:
-            # Read temperature and pressure from BMP180
             temperature, air_pressure = bmp180_read_data()
             scd41_data = scd41_read_data()
-            # Publish the sensor data to MQTT Broker
             try:
+                # Publish the sensor data to MQTT Broker
                 client.publish(BMP180_TEMP_TOPIC, str(temperature))
                 print(f"Published bmp180_temperature {temperature} to {BMP180_TEMP_TOPIC}")
                 client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
