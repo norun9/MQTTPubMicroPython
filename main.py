@@ -1,11 +1,17 @@
 import time
 from umqtt.robust import MQTTClient
-from bmp180_scd41 import bmp180_read_data
+from bmp180_scd41 import bmp180_read_data, scd41_read_data
 import network
 import uasyncio as asyncio
 
-TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
-PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
+BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
+BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
+
+SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
+SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
+SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
+
+
 SSID = 'JAISTALL'
 SSID_PASSWORD = ''
 
@@ -47,8 +53,10 @@ async def net_setup() -> MQTTClient:
         raise
 
     try:
-        mqtt_client.subscribe(TEMP_TOPIC)
-        mqtt_client.subscribe(PRESSURE_TOPIC)
+        mqtt_client.subscribe("i483/sensors/s2410014/#")
+
+        # mqtt_client.subscribe(BMP180_TEMP_TOPIC)
+        # mqtt_client.subscribe(BMP180_PRESSURE_TOPIC)
     except Exception as e:
         print(f"Failed to subscribe to topics: {e}")
         raise
@@ -60,17 +68,24 @@ async def publish_sensor_data(client):
         while True:
             # Read temperature and pressure from BMP180
             temperature, air_pressure = bmp180_read_data()
-            # scd41_data = scd41_read_data()
+            scd41_data = scd41_read_data()
             # Publish the sensor data to MQTT Broker
             try:
-                client.publish(TEMP_TOPIC, str(temperature))
-                client.publish(PRESSURE_TOPIC, str(air_pressure))
-                print(f"Published temperature {temperature} to {TEMP_TOPIC}")
-                print(f"Published pressure {air_pressure} to {PRESSURE_TOPIC}")
+                client.publish(BMP180_TEMP_TOPIC, str(temperature))
+                print(f"Published bmp180_temperature {temperature} to {BMP180_TEMP_TOPIC}")
+                client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
+                print(f"Published pressure {air_pressure} to {BMP180_PRESSURE_TOPIC}")
+                if (scd41_data):
+                    co2, temperature, humidity = scd41_data
+                    client.publish(SCD41_TEMP_TOPIC, str(temperature))
+                    print(f"Published scd41_temperature {temperature} to {SCD41_TEMP_TOPIC}")
+                    client.publish(SCD41_CO2_TOPIC, str(co2))
+                    print(f"Published co2 {co2} to {SCD41_CO2_TOPIC}")
+                    client.publish(SCD41_HUMIDITY_TOPIC, str(humidity))
+                    print(f"Published humidity {humidity} to {SCD41_HUMIDITY_TOPIC}")
             except Exception as e:
                 print(f"Failed to publish MQTT message: {e}")
                 raise
-
             # Wait before sending next reading
             await asyncio.sleep(1)  # Adjust delay as needed
     except asyncio.CancelledError:
@@ -88,7 +103,7 @@ async def poll_mqtt(client):
         client.disconnect()
 
 
-async def main():
+async def task_gather():
     client = await net_setup()
     publish_task = asyncio.create_task(publish_sensor_data(client))
     poll_task = asyncio.create_task(poll_mqtt(client))
@@ -104,6 +119,6 @@ async def main():
 
 
 async def all_tasks():
-    await main()
+    await task_gather()
 
 asyncio.run(all_tasks())
