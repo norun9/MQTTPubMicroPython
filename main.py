@@ -1,7 +1,5 @@
-import time
 from umqtt.robust import MQTTClient
 from bmp180_scd41 import bmp180_read_data, scd41_read_data
-import network
 import uasyncio as asyncio
 
 BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
@@ -9,37 +7,14 @@ BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
 SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
 SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
 SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
-
-SSID = 'JAISTALL'
-SSID_PASSWORD = ''
+topics = [BMP180_TEMP_TOPIC, BMP180_PRESSURE_TOPIC, SCD41_TEMP_TOPIC, SCD41_CO2_TOPIC, SCD41_HUMIDITY_TOPIC]
 
 
 def sub(topic, msg):
     print(f'Received message {msg.decode()} on topic {topic}')
 
 
-async def connect_to_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    print(f"MAC: {wlan.config('mac').hex()}")
-    if not wlan.isconnected():
-        print(f"Connecting to network {SSID}...")
-        wlan.connect(SSID, SSID_PASSWORD)
-        for _ in range(30):  # attempt wifi connection for 30seconds
-            if wlan.isconnected():
-                break
-            print(".", end="")
-            await asyncio.sleep(1)
-    if wlan.isconnected():
-        print("\nConnected to WiFi")
-        print(f"network config: {wlan.ifconfig()}")
-    else:
-        print("\nFailed to connect to WiFi")
-        raise
-
-
 async def net_setup() -> MQTTClient:
-    await connect_to_wifi()
     mqtt_client = MQTTClient(client_id="test", server="150.65.230.59")
     mqtt_client.set_callback(sub)
 
@@ -51,7 +26,8 @@ async def net_setup() -> MQTTClient:
         raise
 
     try:
-        mqtt_client.subscribe("i483/sensors/s2410014/#")
+        for topic in topics:
+            mqtt_client.subscribe(topic)
     except Exception as e:
         print(f"Failed to subscribe to topics: {e}")
         raise
