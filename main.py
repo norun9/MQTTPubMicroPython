@@ -7,7 +7,7 @@ BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
 SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
 SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
 SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
-topics = [BMP180_TEMP_TOPIC, BMP180_PRESSURE_TOPIC, SCD41_TEMP_TOPIC, SCD41_CO2_TOPIC, SCD41_HUMIDITY_TOPIC]
+TOPICS = [BMP180_TEMP_TOPIC, BMP180_PRESSURE_TOPIC, SCD41_TEMP_TOPIC, SCD41_CO2_TOPIC, SCD41_HUMIDITY_TOPIC]
 
 
 def sub(topic, msg):
@@ -26,7 +26,7 @@ async def net_setup() -> MQTTClient:
         raise
 
     try:
-        for topic in topics:
+        for topic in TOPICS:
             mqtt_client.subscribe(topic)
     except Exception as e:
         print(f"Failed to subscribe to topics: {e}")
@@ -41,17 +41,17 @@ async def publish_sensor_data(client):
             scd41_data = scd41_read_data()
             try:
                 # Publish the sensor data to MQTT Broker
-                client.publish(BMP180_TEMP_TOPIC, str(temperature))
+                client.publish(BMP180_TEMP_TOPIC, f"{temperature} C")
                 print(f"Published bmp180_temperature {temperature} to {BMP180_TEMP_TOPIC}")
-                client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
+                client.publish(BMP180_PRESSURE_TOPIC, f"{air_pressure} hPa")
                 print(f"Published pressure {air_pressure} to {BMP180_PRESSURE_TOPIC}")
                 if (scd41_data):
-                    co2, temperature, humidity = scd41_data
-                    client.publish(SCD41_TEMP_TOPIC, str(temperature))
-                    print(f"Published scd41_temperature {temperature} to {SCD41_TEMP_TOPIC}")
-                    client.publish(SCD41_CO2_TOPIC, str(co2))
+                    co2, _, humidity = scd41_data
+                    # client.publish(SCD41_TEMP_TOPIC, f"{temperature} C")
+                    # print(f"Published scd41_temperature {temperature} to {SCD41_TEMP_TOPIC}")
+                    client.publish(SCD41_CO2_TOPIC, f"{co2} ppm")
                     print(f"Published co2 {co2} to {SCD41_CO2_TOPIC}")
-                    client.publish(SCD41_HUMIDITY_TOPIC, str(humidity))
+                    client.publish(SCD41_HUMIDITY_TOPIC, f"{humidity} %")
                     print(f"Published humidity {humidity} to {SCD41_HUMIDITY_TOPIC}")
             except Exception as e:
                 print(f"Failed to publish MQTT message: {e}")
