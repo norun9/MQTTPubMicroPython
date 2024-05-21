@@ -33,31 +33,24 @@ async def net_setup() -> MQTTClient:
         raise
     return mqtt_client
 
-
 async def publish_sensor_data(client):
     try:
         while True:
+            await asyncio.sleep(15)
             temperature, air_pressure = bmp180_read_data()
             scd41_data = scd41_read_data()
             try:
                 # Publish the sensor data to MQTT Broker
-                client.publish(BMP180_TEMP_TOPIC, f"{temperature} C")
-                print(f"Published bmp180_temperature {temperature} to {BMP180_TEMP_TOPIC}")
-                client.publish(BMP180_PRESSURE_TOPIC, f"{air_pressure} hPa")
-                print(f"Published pressure {air_pressure} to {BMP180_PRESSURE_TOPIC}")
+                client.publish(BMP180_TEMP_TOPIC, f"BMP180 Temperature: {temperature} C")
+                client.publish(BMP180_PRESSURE_TOPIC, f"BMP180 Pressure: {air_pressure} hPa")
                 if (scd41_data):
                     co2, _, humidity = scd41_data
-                    # client.publish(SCD41_TEMP_TOPIC, f"{temperature} C")
-                    # print(f"Published scd41_temperature {temperature} to {SCD41_TEMP_TOPIC}")
-                    client.publish(SCD41_CO2_TOPIC, f"{co2} ppm")
-                    print(f"Published co2 {co2} to {SCD41_CO2_TOPIC}")
-                    client.publish(SCD41_HUMIDITY_TOPIC, f"{humidity} %")
-                    print(f"Published humidity {humidity} to {SCD41_HUMIDITY_TOPIC}")
+                    client.publish(SCD41_TEMP_TOPIC, f"SCD41 Temperature: {temperature} C")
+                    client.publish(SCD41_CO2_TOPIC, f"SCD41 CO2: {co2} ppm")
+                    client.publish(SCD41_HUMIDITY_TOPIC, f"SCD41 Humidity: {humidity} %")
             except Exception as e:
                 print(f"Failed to publish MQTT message: {e}")
                 raise
-            # Wait before sending next reading
-            await asyncio.sleep(1)  # Adjust delay as needed
     except asyncio.CancelledError:
         print("Publish task cancelled")
         client.disconnect()
