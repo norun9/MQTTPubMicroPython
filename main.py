@@ -33,6 +33,7 @@ async def net_setup() -> MQTTClient:
         raise
     return mqtt_client
 
+
 async def publish_sensor_data(client):
     try:
         while True:
@@ -41,13 +42,13 @@ async def publish_sensor_data(client):
             scd41_data = scd41_read_data()
             try:
                 # Publish the sensor data to MQTT Broker
-                client.publish(BMP180_TEMP_TOPIC, f"BMP180 Temperature: {temperature} C")
-                client.publish(BMP180_PRESSURE_TOPIC, f"BMP180 Pressure: {air_pressure} hPa")
+                client.publish(BMP180_TEMP_TOPIC, str(temperature))
+                client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
                 if (scd41_data):
                     co2, _, humidity = scd41_data
-                    client.publish(SCD41_TEMP_TOPIC, f"SCD41 Temperature: {temperature} C")
-                    client.publish(SCD41_CO2_TOPIC, f"SCD41 CO2: {co2} ppm")
-                    client.publish(SCD41_HUMIDITY_TOPIC, f"SCD41 Humidity: {humidity} %")
+                    client.publish(SCD41_TEMP_TOPIC, str(temperature))
+                    client.publish(SCD41_CO2_TOPIC, str(co2))
+                    client.publish(SCD41_HUMIDITY_TOPIC, str(humidity))
             except Exception as e:
                 print(f"Failed to publish MQTT message: {e}")
                 raise
