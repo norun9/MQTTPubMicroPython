@@ -219,6 +219,7 @@ def rpr_mode_control():
 def rpr_als_control():
     i2c.writeto(RPR_ADDR, bytes([0x42, 0x02]))
 
+
 def read_als_data():
     # レジスタからデータを読み取り
     i2c.writeto(RPR_ADDR, bytes([0x46, 0x01]))
@@ -226,6 +227,10 @@ def read_als_data():
     als_value = (data[1] << 8) | data[0]
     return als_value
 
+
+rpr_system_control()
+rpr_mode_control()
+rpr_als_control()
 
 bmp180_read_chip_id(i2c)
 coef = bmp180_read_coefficients(i2c)
