@@ -1,9 +1,10 @@
 from umqtt.robust import MQTTClient
-from bmp180_scd41 import bmp180_read_data, scd41_read_data
+from data import bmp180_read_data, scd41_read_data, read_als_data
 import uasyncio as asyncio
 
 BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
 BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
+RPR_ALS_TOPIC = "i483/sensors/team2/RPR-0521RS/ambient_illumination"
 SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
 SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
 SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
@@ -40,10 +41,12 @@ async def publish_sensor_data(client):
             await asyncio.sleep(15)
             temperature, air_pressure = bmp180_read_data()
             scd41_data = scd41_read_data()
+            als_value = read_als_data()
             try:
                 # Publish the sensor data to MQTT Broker
                 client.publish(BMP180_TEMP_TOPIC, str(temperature))
                 client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
+                client.publish(RPR_ALS_TOPIC, str(als_value))
                 if (scd41_data):
                     co2, _, humidity = scd41_data
                     client.publish(SCD41_TEMP_TOPIC, str(temperature))
