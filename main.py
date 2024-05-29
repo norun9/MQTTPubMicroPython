@@ -4,7 +4,7 @@ import uasyncio as asyncio
 
 BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
 BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
-RPR_ALS_TOPIC = "i483/sensors/team2/RPR-0521RS/ambient_illumination"
+RPR_ALS_TOPIC = "i483/sensors/team2/RPR0521RS/ambient_illumination"
 SCD41_TEMP_TOPIC = "i483/sensors/s2410014/SCD41/temperature"
 SCD41_CO2_TOPIC = "i483/sensors/s2410014/SCD41/co2"
 SCD41_HUMIDITY_TOPIC = "i483/sensors/s2410014/SCD41/humidity"
