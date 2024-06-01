@@ -1,6 +1,7 @@
 from umqtt.robust import MQTTClient
 from data import bmp180_read_data, scd41_read_data, read_als_data
 import uasyncio as asyncio
+import machine
 
 BMP180_TEMP_TOPIC = "i483/sensors/s2410014/BMP180/temperature"
 BMP180_PRESSURE_TOPIC = "i483/sensors/s2410014/BMP180/air_pressure"
@@ -24,14 +25,14 @@ async def net_setup() -> MQTTClient:
         print("Connected to MQTT Broker")
     except Exception as e:
         print(f"Failed to connect to MQTT Broker: {e}")
-        raise
+        machine.reset()
 
     try:
         for topic in TOPICS:
             mqtt_client.subscribe(topic)
     except Exception as e:
         print(f"Failed to subscribe to topics: {e}")
-        raise
+        machine.reset()
     return mqtt_client
 
 
@@ -39,25 +40,26 @@ async def publish_sensor_data(client):
     try:
         while True:
             await asyncio.sleep(15)
-            temperature, air_pressure = bmp180_read_data()
+            bmp180_temperature, air_pressure = bmp180_read_data()
             scd41_data = scd41_read_data()
             als_value = read_als_data()
             try:
                 # Publish the sensor data to MQTT Broker
-                client.publish(BMP180_TEMP_TOPIC, str(temperature))
+                client.publish(BMP180_TEMP_TOPIC, str(bmp180_temperature))
                 client.publish(BMP180_PRESSURE_TOPIC, str(air_pressure))
                 client.publish(RPR_ALS_TOPIC, str(als_value))
                 if (scd41_data):
-                    co2, _, humidity = scd41_data
-                    client.publish(SCD41_TEMP_TOPIC, str(temperature))
+                    co2, scd41_temperature, humidity = scd41_data
+                    client.publish(SCD41_TEMP_TOPIC, str(scd41_temperature))
                     client.publish(SCD41_CO2_TOPIC, str(co2))
                     client.publish(SCD41_HUMIDITY_TOPIC, str(humidity))
             except Exception as e:
                 print(f"Failed to publish MQTT message: {e}")
-                raise
+                machine.reset()
     except asyncio.CancelledError:
         print("Publish task cancelled")
         client.disconnect()
+        machine.reset()
 
 
 async def poll_mqtt(client):
@@ -68,6 +70,7 @@ async def poll_mqtt(client):
     except asyncio.CancelledError:
         print("MQTT poll task cancelled")
         client.disconnect()
+        machine.reset()
 
 
 async def task_gather():
@@ -83,6 +86,7 @@ async def task_gather():
         await asyncio.gather(publish_task, poll_task, return_exceptions=True)
         print("Disconnected from MQTT Broker")
         client.disconnect()
+        machine.reset()
 
 
 async def all_tasks():
